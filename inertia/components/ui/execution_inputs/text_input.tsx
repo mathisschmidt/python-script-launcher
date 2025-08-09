@@ -1,33 +1,38 @@
-import {TextInputInfos} from "~/types/project_infos";
+import {TextInputInfos} from "~/types/schemas";
+import {useState} from "react";
 
 type TextInputProps = {
-  input_infos: TextInputInfos;
+  inputInfos: TextInputInfos;
   onChange?: (name: string, value: string) => void;
 }
 
 export default function TextInput(props: TextInputProps) {
-  const { input_infos, onChange } = props;
-  const fieldId = `input-text-${input_infos.name}`;
+  const { inputInfos, onChange } = props;
+  const fieldId = `input-text-${inputInfos.name}`;
+  const [currentValue, setCurrentValue] = useState(inputInfos.defaultValue || '');
+
+  const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentValue(e.target.value);
+    if (onChange) {
+      onChange(inputInfos.name, e.target.value);
+    }
+  }
 
   return (
-    <div className="input-group">
+    <div className="input-group" key={fieldId}>
       <label className="form-label" htmlFor={fieldId}>
-        ${input_infos.description || input_infos.name}
-        ${input_infos.required ? '<span style="color: var(--color-error);">*</span>' : ''}
+        {inputInfos.description || inputInfos.name}
+        {inputInfos.required ? <span style={{ color: "var(--color-error)" }}>*</span> : ''}
       </label>
       <input
         type="text"
         id={fieldId}
         className="form-control"
-        name={input_infos.name}
-        value={input_infos.default_value || ''}
-        onChange={(e) => {
-          if (onChange) {
-            onChange(input_infos.name, e.target.value);
-          }
-        }}
-        required={input_infos.required}
-        placeholder={`Enter ${input_infos.name}...`}
+        name={inputInfos.name}
+        value={currentValue}
+        onChange={handleOnChange}
+        required={inputInfos.required}
+        placeholder={`Enter ${inputInfos.name}...`}
       />
     </div>
   )

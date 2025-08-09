@@ -1,5 +1,5 @@
 import {useForm} from "@inertiajs/react";
-import {ProjectInfos} from "~/types/project_infos";
+import {ProjectInfos} from "~/types/schemas";
 import {Loader, Play} from "lucide-react";
 import FileInput from "~/components/ui/execution_inputs/file_input";
 import TextInput from "~/components/ui/execution_inputs/text_input";
@@ -17,28 +17,37 @@ export default function ExecutionForm(props: ExecutionFormProps) {
 
     project_infos.inputs.forEach(input => {
       if (input.type === 'file') {
-        initialData[input.name] = input.multiple ? [] : null
+        initialData[input.name] = null
       }
       if (input.type === 'text') {
-        initialData[input.name] = input.default_value || ''
+        initialData[input.name] = input.defaultValue || ''
       }
     })
     return initialData
   }
 
-  const { data, setData, post, errors, processing, reset } = useForm(getInitialData())
+  const { data, setData, post, processing, reset } = useForm(getInitialData())
 
   const handleInputChange = (key: string, value: any) => {
     setData(key, value)
   }
 
-  const handleRemove = (name_input: string, index_file: number) => {
-    data[name_input] = data[name_input].filter((_: any, i: number) => i !== index_file)
-    setData(name_input, data[name_input])
-  }
-
   const handleSubmit = (e: any) => {
     e.preventDefault()
+
+    console.log("entered")
+    // Custom validation for required file inputs
+    for (const input of project_infos.inputs) {
+      if (input.type === 'file' && input.required) {
+        const fileData = data[input.name];
+        // Check if file data is missing, null, undefined, or empty
+        if (!fileData || (fileData instanceof FileList && fileData.length === 0) ||
+          (Array.isArray(fileData) && fileData.length === 0)) {
+          alert(`${input.description || input.name} is required`);
+          return;
+        }
+      }
+    }
 
     // Check if we have any file inputs
     const hasFiles = project_infos.inputs.some(input =>
@@ -55,35 +64,45 @@ export default function ExecutionForm(props: ExecutionFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      {project_infos.inputs.map(input => {
-        if (input.type === 'file') {
-          return <FileInput input_infos={input} on_change={handleInputChange} on_remove={handleRemove} />
-        }
-        if (input.type === 'text') {
-          return <TextInput input_infos={input} />
-        }
-        return <></>
-      })}
+    <div className="execution-form">
+      <div className="card">
+        <div className="card__body">
+          <h3>Configuration</h3>
+          <form onSubmit={handleSubmit}>
+            {project_infos.inputs.map(input => {
+              if (input.type === 'file') {
+                return <FileInput inputInfos={input} onChange={handleInputChange} key={input.name} />
+              }
+              if (input.type === 'text') {
+                return <TextInput inputInfos={input} key={input.name} onChange={handleInputChange}/>
+              }
+              return <></>
+            })}
 
-      <button
-        type="submit"
-        disabled={processing}
-        className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        {processing ? (
-          <>
-            <Loader className="w-4 h-4 mr-2 animate-spin" />
-            Running...
-          </>
-        ) : (
-          <>
-            <Play className="w-4 h-4 mr-2" />
-            Run Script
-          </>
-        )}
-      </button>
-    </form>
+            <button
+              type="submit"
+              disabled={processing}
+              className="btn btn--primary btn--full-width"
+            >
+              {processing ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin"/>
+                  Running...
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 mr-2"/>
+                  Run Script
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+
+
   )
 
 }

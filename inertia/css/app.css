@@ -854,7 +854,7 @@ select.form-control {
   background-opacity: 0.1;
 }
 
-.upload-content i {
+.upload-content svg {
   width: 48px;
   height: 48px;
   color: var(--color-text-secondary);
@@ -973,7 +973,7 @@ select.form-control {
   gap: var(--space-6);
 }
 
-.meta-item i {
+.meta-item svg {
   width: 16px;
   height: 16px;
 }
@@ -1196,7 +1196,7 @@ select.form-control {
   gap: var(--space-12);
 }
 
-.file-info i {
+.file-info svg {
   width: 20px;
   height: 20px;
   color: var(--color-primary);
