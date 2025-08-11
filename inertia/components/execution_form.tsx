@@ -1,15 +1,25 @@
 import {useForm} from "@inertiajs/react";
-import {ProjectInfos} from "~/types/schemas";
+import {ProjectInfos, RunExecutionAnswer} from "~/types/schemas";
 import {Loader, Play} from "lucide-react";
 import FileInput from "~/components/ui/execution_inputs/file_input";
 import TextInput from "~/components/ui/execution_inputs/text_input";
+import axios from 'axios';
+import {useState} from "react";
+import {toast} from "react-toastify";
+
+
+// TODO: Add toast if succeed to execute or not
+// TODO: if succeed block button run script
+// TODO: if succeed, call the On succeed of parent component. For start output things
 
 type ExecutionFormProps = {
   project_infos: ProjectInfos;
+  onSucceed?: (executionId: string, channelName: string) => void;
 }
 
 export default function ExecutionForm(props: ExecutionFormProps) {
-  const { project_infos } = props;
+  const { project_infos, onSucceed } = props;
+  const [processing, setProcessing] = useState(false);
 
   const getInitialData = () => {
     const initialData: Record<string, any> = {}
@@ -26,16 +36,16 @@ export default function ExecutionForm(props: ExecutionFormProps) {
     return initialData
   }
 
-  const { data, setData, post, processing, reset } = useForm(getInitialData())
+  const { data, setData } = useForm(getInitialData())
 
   const handleInputChange = (key: string, value: any) => {
     setData(key, value)
   }
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault()
+    setProcessing(true);
 
-    console.log("entered")
     // Custom validation for required file inputs
     for (const input of project_infos.inputs) {
       if (input.type === 'file' && input.required) {
@@ -54,13 +64,30 @@ export default function ExecutionForm(props: ExecutionFormProps) {
       input.type === 'file' && data[input.name]
     )
 
-    post('/execution', {
-      forceFormData: hasFiles, // Only use FormData if we have files
-      onSuccess: () => {
-        console.log('Form submitted successfully!')
-        reset()
+    let headers: Record<string, any> = {};
+    if (hasFiles) {
+      headers['Content-Type'] = 'multipart/form-data';
+    } else {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    try {
+      const response = await axios.post('/execution', data, {headers});
+      const answer: RunExecutionAnswer = response.data
+
+      if (!answer.success) {
+        throw new Error(answer.message);
       }
-    })
+      if (!answer.executionId || !answer.channelName) {
+        throw new Error('Execution ID or channel name is missing in the response');
+      }
+      onSucceed && onSucceed(answer.executionId, answer.channelName);
+      toast.success('Script execution started')
+      // TODO: disable inputs when processing is true
+    } catch (error) {
+      toast.error('error: ' + error.message);
+      setProcessing(false);
+    }
   }
 
   return (

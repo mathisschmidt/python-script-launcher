@@ -12,6 +12,7 @@ const inertiaConfig = defineConfig({
    */
   sharedData: {
     // user: (ctx) => ctx.inertia.always(() => ctx.auth.user),
+    origin: (ctx) => `${ctx.request.protocol()}://${ctx.request.host()}`,
   },
 
   /**

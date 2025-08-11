@@ -1,9 +1,11 @@
 import { HttpContext } from '@adonisjs/core/http'
 import ProjectModel from '#models/project'
-import { ProjectInfosSchema } from '../../inertia/types/schemas.js'
+import {ProjectInfosSchema, RunExecutionAnswer} from '../../inertia/types/schemas.js'
 import { ZodError } from 'zod'
 import ProjectInfo from "#models/project";
-import ExecuteProject from "../execution_scripts/execute.js";
+import ExecuteScriptService from "#services/execute_script_service";
+
+// TODO: implement the stop execution
 
 export default class ExecutionController {
 
@@ -47,13 +49,28 @@ export default class ExecutionController {
       const project = await ProjectModel.findOrFail(data.project_id)
       const projectInfos = this.getAndValidateProjectInfos(project)
 
-      const resultExecution = await (new ExecuteProject(projectInfos, request)).execute()
-      console.log(resultExecution)
+      const { executionId, channelName } = await ExecuteScriptService.startExecution(
+        projectInfos,
+        request
+      )
+
+      return response.json({
+        success: true,
+        executionId,
+        channelName,
+        message: 'Script execution started'
+      } as RunExecutionAnswer)
     } catch (error) {
       if (error instanceof ZodError) {
-        return response.status(422).json({ error: 'Validation error: ' + error.message })
+        return response.status(422).json({
+          success: false,
+          message: 'Validation error: ' + error.message
+        } as RunExecutionAnswer)
       }
-      return response.status(404).json({ error: 'Internal error:' + error.message })
+      return response.status(400).json({
+        success: false,
+        message: error.message
+      } as RunExecutionAnswer)
     }
 
   }
