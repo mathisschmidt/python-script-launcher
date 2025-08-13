@@ -11,7 +11,7 @@ import {toast} from "react-toastify";
 
 type ExecutionFormProps = {
   project_infos: ProjectInfos;
-  onSucceed?: (executionId: string, channelName: string) => void;
+  onSucceed?: (executionId: string) => void;
 }
 
 export default function ExecutionForm(props: ExecutionFormProps) {
@@ -75,10 +75,10 @@ export default function ExecutionForm(props: ExecutionFormProps) {
       if (!answer.success) {
         throw new Error(answer.message);
       }
-      if (!answer.executionId || !answer.channelName) {
-        throw new Error('Execution ID or channel name is missing in the response');
+      if (!answer.executionId) {
+        throw new Error('Execution ID is missing in the response');
       }
-      onSucceed && onSucceed(answer.executionId, answer.channelName);
+      onSucceed && onSucceed(answer.executionId);
       toast.success('Script execution started')
       // TODO: disable inputs when processing is true
     } catch (error) {
