@@ -155,13 +155,6 @@ export default class ExecuteScriptService {
   }
 
   /**
-   * Get the status of an execution
-   */
-  static async getExecutionStatus() {
-    logger.error('ExecuteScriptService.getExecutionStatus is not implemented yet')
-  }
-
-  /**
    * Get the output message of an execution
    */
   static async getExecutionMessages(execution: Execution, startTime: DateTime | null=null): Promise<ExecutionMessage[]> {

@@ -1,9 +1,10 @@
 import { HttpContext } from '@adonisjs/core/http'
 import ProjectModel from '#models/project'
-import {ProjectInfosSchema, RunExecutionAnswer} from '../../inertia/types/schemas.js'
+import {ExecutionStatusSchema, ProjectInfosSchema, RunExecutionAnswer} from '../../inertia/types/schemas.js'
 import { ZodError } from 'zod'
 import ProjectInfo from "#models/project";
 import ExecuteScriptService from "#services/execute_script_service";
+import Execution from "#models/execution";
 
 // TODO: implement the stop execution
 
@@ -20,7 +21,6 @@ export default class ExecutionController {
       throw error
     }
   }
-
 
   async show({params, inertia, response}: HttpContext) {
     try {
@@ -72,5 +72,25 @@ export default class ExecutionController {
       } as RunExecutionAnswer)
     }
 
+  }
+
+  async getStatus({params, response}: HttpContext) {
+    const executionId = params.id
+    if (!executionId) {
+      return response.status(400).json({ error: 'Execution ID is required' })
+    }
+
+    try {
+      const execution = await Execution.findOrFail(executionId)
+      const data = ExecutionStatusSchema.parse({
+        status: execution.status,
+        exitCode: execution.exitCode,
+        startedAt: execution.startedAt,
+        completedAt: execution.completedAt
+      })
+      return response.json(data)
+    } catch (error) {
+      return response.status(404).json({ error: 'Execution not found or not valid' })
+    }
   }
 }

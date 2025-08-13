@@ -43,7 +43,17 @@ export const runExecutionAnswerSchema = z.object({
   executionId: z.string().optional(),
 })
 
+export const ExecutionStatusSchema = z.object({
+  status: z.enum(['pending', 'running', 'completed', 'failed', 'stopped']),
+  exitCode: z.number().optional(),
+  startedAt: z.date().optional(),
+  completedAt: z.date().optional(),
+})
+
+export type ExecutionStatus = z.infer<typeof ExecutionStatusSchema>
 export type RunExecutionAnswer = z.infer<typeof runExecutionAnswerSchema>
+
+
 
 //##########################################################################################
 export const ExecutionMessageSchema = z.object({
