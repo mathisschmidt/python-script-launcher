@@ -29,8 +29,28 @@ export const ProjectInfosSchema = z.object({
   outputs: z.array(z.string())
 })
 
-// Types inférés des schémas
 export type ProjectInfos = z.infer<typeof ProjectInfosSchema>
 export type InputInfos = z.infer<typeof InputInfosSchema>
 export type FileInputInfos = z.infer<typeof FileInputInfosSchema>
 export type TextInputInfos = z.infer<typeof TextInputInfosSchema>
+
+
+//##########################################################################################
+
+export const runExecutionAnswerSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  executionId: z.string().optional(),
+})
+
+export type RunExecutionAnswer = z.infer<typeof runExecutionAnswerSchema>
+
+//##########################################################################################
+export const ExecutionMessageSchema = z.object({
+  id: z.number(),
+  executionId: z.string(),
+  message: z.string(),
+  timestamp: z.date()
+})
+
+export type ExecutionMessage = z.infer<typeof ExecutionMessageSchema>
