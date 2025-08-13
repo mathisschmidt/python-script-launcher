@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react'
 import React from "react";
+import {Bounce, ToastContainer} from "react-toastify";
 
 type ProbsHeader = {
   activeLink: string
@@ -39,11 +40,24 @@ export default function Header(props: ProbsHeader) {
       </div>
     </header>
 
-  <main className="main-content">
-    <div className="container">
-      {children}
-    </div>
-  </main>
+    <main className="main-content">
+      <div className="container">
+        {children}
+      </div>
+    </main>
+    <ToastContainer
+      position="bottom-center"
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick={false}
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme="dark"
+      transition={Bounce}
+    />
   </>
   )
 }
