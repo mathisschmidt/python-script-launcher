@@ -2,9 +2,10 @@ import {useEffect, useRef, useState} from "react";
 import axios from "axios";
 import {ExecutionMessage, ExecutionMessageSchema, ExecutionStatus, ExecutionStatusSchema} from "~/types/schemas";
 import {toast} from "react-toastify";
+import clsx from "clsx";
 
 type PropsExecutionOutput = {
-  executionId: string
+  executionId?: string | null
 }
 
 export default function ExecutionOutput(props: PropsExecutionOutput) {
@@ -58,6 +59,10 @@ export default function ExecutionOutput(props: PropsExecutionOutput) {
   }
 
   const startRequestLoop = () => {
+    if (!executionId) {
+      return
+    }
+
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -93,7 +98,16 @@ export default function ExecutionOutput(props: PropsExecutionOutput) {
     return () => {
       stopRequestLoop()
     }
-  }, []);
+  }, [props]);
+
+  const statusIsInfo = statusRef.current && (statusRef.current.status === 'running' || statusRef.current.status === 'pending')
+
+  const statusIsError = statusRef.current && statusRef.current.status === 'failed'
+
+  const statusIsSuccess = statusRef.current && statusRef.current.status === 'completed'
+
+  const statusIsWarning = statusRef.current && statusRef.current.status === 'stopped'
+
 
   return (
     <div className="execution-output">
@@ -102,7 +116,13 @@ export default function ExecutionOutput(props: PropsExecutionOutput) {
           <div className="output-header">
             <h3>Output</h3>
             <div className="status-indicator" id="execution-status">
-              <span className="status status--info">Ready</span>
+              <span className={clsx(
+                "status",
+                statusIsInfo && "status--info",
+                statusIsError && "status--error",
+                statusIsSuccess && "status--success",
+                statusIsWarning && "status--warning",
+              )}>{statusRef.current? statusRef.current.status: 'Not running'}</span>
             </div>
           </div>
           <div className="terminal" id="terminal">
