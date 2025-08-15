@@ -10,10 +10,13 @@ export default class ExecutionMessage extends BaseModel {
   @column()
   declare content: string
 
-  @belongsTo(() => Execution)
-  declare executionId: BelongsTo<typeof Execution>
-
   @column()
+  declare executionId: string
+
+  @belongsTo(() => Execution)
+  declare execution: BelongsTo<typeof Execution>
+
+  @column.dateTime()
   declare timestamp: DateTime
 
   @column.dateTime({ autoCreate: true })

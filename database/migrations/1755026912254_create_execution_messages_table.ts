@@ -7,7 +7,7 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').primary()
       table.text('content').notNullable()
-      table.string('execution_id').notNullable().references('id').inTable('executions').onDelete('CASCADE')
+      table.string('execution_id').notNullable().references('executions.id').onDelete('CASCADE')
       table.datetime('timestamp').notNullable()
 
       /**

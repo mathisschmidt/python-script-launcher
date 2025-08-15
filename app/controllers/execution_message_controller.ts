@@ -21,14 +21,17 @@ export default class ExecutionMessageController {
 
       const validatedMessages = executionMessages.map(message => {
         const data = message.toJSON();
+         logger.debug('message json: ' + data)
         return ExecutionMessageSchema.parse(data)
       })
 
       logger.debug(`Execution Message Schema: ${JSON.stringify(validatedMessages)}`)
       return response.json(validatedMessages);
     } catch (error) {
-      logger.error('Error fetching execution messages:', error);
-      return response.status(404).redirect().back();
+      logger.error('Error fetching execution messages:', error.message);
+      return response.status(404).json({
+        error: error
+      });
     }
   }
 }

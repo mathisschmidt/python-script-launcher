@@ -3,6 +3,8 @@ import { ProjectInfos } from '~/types/schemas'
 import Header from "~/components/common/header";
 import ExecutionForm from "~/components/execution_form";
 import {ArrowLeft} from "lucide-react";
+import {useState} from "react";
+import ExecutionOutput from "~/components/ui/execution_output";
 
 type ProbsExecutionPage = {
   projectInfos: ProjectInfos
@@ -10,6 +12,11 @@ type ProbsExecutionPage = {
 
 export default function ExecutionPage(props: ProbsExecutionPage) {
   const { projectInfos } = props
+  const [executionId, setExecutionId] = useState<string | null>(null);
+
+  const handleOnSucceed = (executionId: string) => {
+    setExecutionId(executionId);
+  }
 
   return (
     <>
@@ -33,7 +40,10 @@ export default function ExecutionPage(props: ProbsExecutionPage) {
             </div>
           </div>
           <div className="execution-content">
-            <ExecutionForm project_infos={projectInfos}/>
+            <ExecutionForm project_infos={projectInfos} onSucceed={handleOnSucceed}/>
+            {executionId && (
+              <ExecutionOutput executionId={executionId} />
+            )}
           </div>
         </div>
 

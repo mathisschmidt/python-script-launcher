@@ -82,6 +82,7 @@ export default function ExecutionForm(props: ExecutionFormProps) {
       toast.success('Script execution started')
       // TODO: disable inputs when processing is true
     } catch (error) {
+      // TODO: The server return 400 but with the error message saying what happend. But axios return its error because it is code 400. Try to not make axios panic.
       toast.error('error: ' + error.message);
       setProcessing(false);
     }

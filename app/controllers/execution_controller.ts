@@ -5,6 +5,7 @@ import { ZodError } from 'zod'
 import ProjectInfo from "#models/project";
 import ExecuteScriptService from "#services/execute_script_service";
 import Execution from "#models/execution";
+import logger from "@adonisjs/core/services/logger";
 
 // TODO: implement the stop execution
 
@@ -90,7 +91,8 @@ export default class ExecutionController {
       })
       return response.json(data)
     } catch (error) {
-      return response.status(404).json({ error: 'Execution not found or not valid' })
+      logger.error(`Execution not found or not valid. Error: ${error.message}`)
+      return response.status(400).json({ message: 'Execution not found or not valid', error: error })
     }
   }
 }

@@ -6,6 +6,7 @@ import ExecutionMessage from "#models/execution_message";
 export default class Execution extends BaseModel {
   @column({ isPrimary: true })
   declare id: string
+  public static selfAssignPrimaryKey = true
 
   @column()
   declare workspacePath: string
@@ -28,10 +29,10 @@ export default class Execution extends BaseModel {
   @column()
   declare exitCode?: number
 
-  @column()
+  @column.dateTime()
   declare startedAt?: DateTime
 
-  @column()
+  @column.dateTime()
   declare completedAt?: DateTime
 
   @hasMany(() => ExecutionMessage)

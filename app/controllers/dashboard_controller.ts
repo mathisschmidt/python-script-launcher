@@ -2,6 +2,7 @@ import { HttpContext } from '@adonisjs/core/http'
 import Project from '#models/project'
 import {ProjectInfosSchema} from '../../inertia/types/schemas.js'
 import {ZodError} from "zod";
+import logger from "@adonisjs/core/services/logger";
 
 export default class DashboardController {
   async index({ inertia }: HttpContext) {
@@ -12,17 +13,16 @@ export default class DashboardController {
           return ProjectInfosSchema.parse(data)
         }
       )
-
-      console.log(validatedProjects)
+      logger.info(`[DashboardController] Fetched ${validatedProjects.length} projects`)
       return inertia.render('dashboard', {
         projects: validatedProjects
       })
     } catch (error) {
       if (error instanceof ZodError) {
-        console.error('Validation error:', error)
+        logger.error(error.message)
         return inertia.render('dashboard', {
           projects: [],
-          error: 'Une erreur est survenue lors du chargement des projets'
+          error: 'An error occurred while fetching projects. Please try again later.'
         })
       }
       console.error('Unexpected error:', error)
