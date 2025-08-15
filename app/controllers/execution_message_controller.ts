@@ -3,15 +3,17 @@ import Execution from "#models/execution";
 import ExecuteScriptService from "#services/execute_script_service";
 import {ExecutionMessageSchema} from "../../inertia/types/schemas.js";
 import logger from "@adonisjs/core/services/logger";
+import {DateTime} from "luxon";
 
 export default class ExecutionMessageController {
 
   async show({params, request, response}: HttpContext) {
     try {
       logger.debug(`Fetching execution messages for execution ID: ${params.id}`);
-      const startTime = request.input("startTime", null)
+      let startTime = request.input("startTime", null)
 
       if (startTime) {
+        startTime = DateTime.fromISO(startTime)
         logger.debug(`startTime given: ${startTime}`);
       }
 
@@ -28,8 +30,8 @@ export default class ExecutionMessageController {
       logger.debug(`Execution Message Schema: ${JSON.stringify(validatedMessages)}`)
       return response.json(validatedMessages);
     } catch (error) {
-      logger.error('Error fetching execution messages:', error.message);
-      return response.status(404).json({
+      logger.error(`Error fetching execution messages: ${error.message}`);
+      return response.status(400).json({
         error: error
       });
     }

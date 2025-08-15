@@ -10,15 +10,15 @@ type PropsExecutionOutput = {
 export default function ExecutionOutput(props: PropsExecutionOutput) {
   const {executionId} = props
   const [messages, setMessages] = useState<string[]>([]);
-  const [lastTimestamp, setLastTimestamp] = useState<number|null>(null);
+  const lastTimestamp = useRef<Date|null>(null)
   const statusRef = useRef<ExecutionStatus | null>(null)
   const intervalRef = useRef<NodeJS.Timeout|null>(null);
 
   const handleGetMessage = async () => {
     try {
       let url = `/execution_message/${executionId}`
-      if (lastTimestamp) {
-        url = `/execution_message/${executionId}?startTime=${lastTimestamp}`
+      if (lastTimestamp.current) {
+        url = `/execution_message/${executionId}?startTime=${lastTimestamp.current.toISOString()}`
       }
       console.debug(`Get messages: ${url}`)
       const response = await axios.get(url);
@@ -30,7 +30,7 @@ export default function ExecutionOutput(props: PropsExecutionOutput) {
         const newMessages = data.map(message => message.content);
         setMessages(prev => [...prev, ...newMessages]);
         console.debug(`timestamp: ${data[data.length - 1].timestamp}`)
-        setLastTimestamp(data[data.length - 1].timestamp.getTime());
+        lastTimestamp.current = data[data.length - 1].timestamp
       }
     } catch (error) {
       console.error("Error fetching execution messages:", error)

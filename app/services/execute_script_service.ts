@@ -174,7 +174,7 @@ export default class ExecuteScriptService {
 
     if (startTime) {
       // Filter messages by startTime if provided
-      const newList = messages.filter(message => message.timestamp >= startTime)
+      const newList = messages.filter(message => message.timestamp.diff(startTime).milliseconds > 0)
       logger.info(`['${execution.id}'] startTime given, filtering messages from ${startTime.toISO()}. Total messages: ${messages.length}`)
       return newList
     }
