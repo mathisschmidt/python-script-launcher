@@ -1,12 +1,13 @@
 import {ProjectInfos} from "../../inertia/types/schemas.js";
 import app from "@adonisjs/core/services/app";
 import {ChildProcess, spawn} from "node:child_process";
-import {existsSync} from "node:fs";
+import {existsSync, mkdirSync} from "node:fs";
 import Execution from "#models/execution";
 import {DateTime} from "luxon";
 import logger from "@adonisjs/core/services/logger";
 import SystemDetector from "#services/system_detector";
 import ExecutionMessage from "#models/execution_message";
+import path from "node:path";
 
 // TODO: For now there are not protection of execution with owner. All are accessible
 // TODO: Not sure is the best practise to give the request as input. Just we have to succeed to get correctly the files
@@ -33,6 +34,10 @@ export default class ExecuteScriptService {
 
     // Create execution record
     const execution = await this.createANewExecution(projectInfos)
+
+    // Create workspace
+    logger.debug(`Creating workspace place: ${execution.workspacePath}`)
+    mkdirSync(execution.workspacePath, { recursive: true });
 
     // copy files
     await this.copyFilesToWorkspace(
@@ -61,7 +66,7 @@ export default class ExecuteScriptService {
       logger.info(`['${execution.id}'] started at ${execution.startedAt.toISO()}`)
 
       // Save started message
-      execution.related('messages').create({
+      await execution.related('messages').create({
         content: `[From sever] Execution started at ${execution.startedAt.toISO()}`,
         timestamp: DateTime.now()
       })
@@ -201,14 +206,14 @@ export default class ExecuteScriptService {
             if (!file.isValid) {
               throw new Error(`File ${file.clientName} is not valid.`);
             }
-            await file.move(app.tmpPath(workspacePath))
+            await file.move(workspacePath)
           }
         } else {
           const file = request.file(input.name)
           if (!file.isValid) {
             throw new Error(`File ${input.name} is not valid.`);
           }
-          await file.move(app.tmpPath(workspacePath));
+          await file.move(workspacePath);
         }
 
       }
@@ -220,19 +225,30 @@ export default class ExecuteScriptService {
   }
 
   private static async createANewExecution(projectInfos: ProjectInfos,) {
+    // TODO: The path management suck
     const executionId = projectInfos.name.replaceAll(' ', '-') + '_' + Date.now()
-    const workspacePath = `/workspace/${executionId}`
+    const workspacePath = app.tmpPath(`/workspace/${executionId}`)
     const args = this.extractArgsFromProjectInfos(projectInfos)
-    const scriptPath = projectInfos.path + projectInfos.scriptName
-    let pythonPath = projectInfos.path + '.venv/Scripts/python'
 
+    logger.debug(`projectInfos.path before resolve: ${projectInfos.path}`)
+    const resolvedPath = path.resolve(projectInfos.path)
+    logger.debug(`projectInfos.path after resolve: ${resolvedPath}`)
+
+    // Script path manipulation
+    logger.debug(`Script name without resolve: ${projectInfos.scriptName}`)
+    const scriptPath = path.join(resolvedPath, projectInfos.scriptName)
+    logger.debug(`Script path: ${scriptPath}`)
+
+    // Python path manipulation
+    let pythonPath = path.join(resolvedPath, '.venv', 'Scripts', 'python')
     if (SystemDetector.isWindows) {
-      pythonPath = projectInfos.path + '.venv/Scripts/python.exe'
+      pythonPath = path.join(resolvedPath, '.venv', 'Scripts', 'python.exe')
     }
+    logger.debug(`Python path: ${pythonPath}`)
 
     // Validation of paths
     if (!existsSync(pythonPath)){
-      console.error('Python executable not found at:', pythonPath);
+      logger.error(`Python executable not found at: ${pythonPath}`);
       throw new Error('No python found in: ' + pythonPath)
     }
 

@@ -91,7 +91,7 @@ export default class ExecutionController {
       })
       return response.json(data)
     } catch (error) {
-      logger.error(`Execution not found or not valid. Error: ${error.message}`)
+      logger.error(`[execution_controller.getStatus] Execution not found or not valid. Error: ${error.message}`)
       return response.status(400).json({ message: 'Execution not found or not valid', error: error })
     }
   }

@@ -45,9 +45,9 @@ export const runExecutionAnswerSchema = z.object({
 
 export const ExecutionStatusSchema = z.object({
   status: z.enum(['pending', 'running', 'completed', 'failed', 'stopped']),
-  exitCode: z.number().optional(),
-  startedAt: z.coerce.date(),
-  completedAt: z.coerce.date()
+  exitCode: z.number().nullable(),
+  startedAt: z.coerce.date().nullable(),
+  completedAt: z.coerce.date().nullable()
 })
 
 export type ExecutionStatus = z.infer<typeof ExecutionStatusSchema>

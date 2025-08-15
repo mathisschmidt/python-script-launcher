@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 import axios from "axios";
 import {ExecutionMessage, ExecutionMessageSchema, ExecutionStatus, ExecutionStatusSchema} from "~/types/schemas";
+import {toast} from "react-toastify";
 
 type PropsExecutionOutput = {
   executionId: string
@@ -33,6 +34,8 @@ export default function ExecutionOutput(props: PropsExecutionOutput) {
       }
     } catch (error) {
       console.error("Error fetching execution messages:", error)
+      stopRequestLoop()
+      toast.error('Error fetching messages: ' + error.message);
     }
   }
 
@@ -48,6 +51,8 @@ export default function ExecutionOutput(props: PropsExecutionOutput) {
       }
     } catch (error) {
       console.error("Error fetching execution status:", error)
+      stopRequestLoop()
+      toast.error('Error fetching execution status: ' + error.message);
     }
 
   }

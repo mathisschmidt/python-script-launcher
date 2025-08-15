@@ -27,13 +27,13 @@ export default class Execution extends BaseModel {
   declare status: 'pending' | 'running' | 'completed' | 'failed' | 'stopped'
 
   @column()
-  declare exitCode?: number
+  declare exitCode: number | null
 
   @column.dateTime()
-  declare startedAt?: DateTime
+  declare startedAt: DateTime | null
 
   @column.dateTime()
-  declare completedAt?: DateTime
+  declare completedAt: DateTime | null
 
   @hasMany(() => ExecutionMessage)
   declare messages: HasMany<typeof ExecutionMessage>
