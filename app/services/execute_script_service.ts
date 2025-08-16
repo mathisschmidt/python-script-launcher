@@ -1,4 +1,4 @@
-import {ProjectInfos} from "../../inertia/types/schemas.js";
+import {FileInputInfos, ProjectInfos} from "../../inertia/types/schemas.js";
 import app from "@adonisjs/core/services/app";
 import {ChildProcess, spawn} from "node:child_process";
 import {existsSync, mkdirSync} from "node:fs";
@@ -25,13 +25,6 @@ export default class ExecuteScriptService {
     projectInfos: ProjectInfos,
     request: any
   ) {
-    // Validate received data
-    const receivedData: Record<string, any> = request.body()
-    const {result, errors} = this.validateReceivedData(receivedData, projectInfos)
-    if (!result) {
-      throw new Error('The value given for run the execution are not valid. ' + errors.join('\n'))
-    }
-
     // Create execution record
     const execution = await this.createANewExecution(projectInfos)
 
@@ -39,12 +32,12 @@ export default class ExecuteScriptService {
     logger.debug(`Creating workspace place: ${execution.workspacePath}`)
     mkdirSync(execution.workspacePath, { recursive: true });
 
-    // copy files
-    await this.copyFilesToWorkspace(
-      projectInfos,
-      request,
-      execution.workspacePath
-    )
+    // extract data
+    const {args, errors} = await this.extractDataFromRequest(projectInfos, request, execution.workspacePath)
+    if (errors.length > 0) {
+      throw new Error('The value given for run the execution are not valid. ' + errors.join('\n'))
+    }
+    execution.args = args;
 
     // Start the process
     this.executeScript(execution)
@@ -72,11 +65,19 @@ export default class ExecuteScriptService {
       })
 
       // Spawn Python process
-      const pythonProcess = spawn(execution.pythonPath, [execution.scriptPath, ...execution.args], {
+      const pythonProcess = spawn(execution.pythonPath, [...execution.scriptPath.split(' '), ...execution.args], {
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: execution.workspacePath,
       })
       this.runningProcesses.set(execution.id, pythonProcess)
+
+      // Saved cmd infos
+      const cmd = pythonProcess.spawnargs.join(" ");
+      logger.debug(`[${execution.id}] cmd used: ${cmd}`)
+      await execution.related('messages').create({
+        content: `[From sever] cmd used: ${cmd}`,
+        timestamp: DateTime.now()
+      })
 
       // Handle stdout
       pythonProcess.stdout.on('data', (data) => {
@@ -185,59 +186,82 @@ export default class ExecuteScriptService {
   /**
    * Useful methods
    */
-  private static validateReceivedData(data: Record<string, any>, projectInfos: ProjectInfos): {result: boolean, errors: string[]} {
+
+  private static async extractDataFromRequest(projectInfos: ProjectInfos, request: any, workspacePath: string) {
+    // Return args
+    const body = request.body()
+    const args: string[] = []
     const errors: string[] = []
 
-    projectInfos.inputs.forEach((input) => {
-      if (input.required && !(input.name in data)) {
-        errors.push(`${input.name} is required but not provided in the data.`);
-      }
-    })
-
-    return {result: errors.length === 0, errors: errors};
-  }
-
-  private static async copyFilesToWorkspace(projectInfos: ProjectInfos, request: any, workspacePath: string) {
     for (const input of projectInfos.inputs) {
-      if (input.type === 'file') {
-        if (input.multiple) {
-          const files = request.files(input.name)
-          for (const file of files) {
-            if (!file.isValid) {
-              throw new Error(`File ${file.clientName} is not valid.`);
-            }
-            await file.move(workspacePath)
-          }
-        } else {
-          const file = request.file(input.name)
-          if (!file.isValid) {
-            throw new Error(`File ${input.name} is not valid.`);
-          }
-          await file.move(workspacePath);
-        }
 
+      if (input.required && !(input.name in body)) {
+        errors.push(`${input.name} is required but not provided in the data.`);
+        continue
+      }
+      if (!(input.name in body)) {
+        continue
+      }
+      // TODO: check always same order
+      // TODO: explain order important, it have to be in the order of wanted in the cmd
+      const isOption = input.name.startsWith('-')
+
+      if (input.type === 'file') {
+        const files = await this.copyFilesToWorkspace(input, request, workspacePath)
+        files.forEach((file) => {
+          if (isOption) {
+            args.push(input.name)
+          }
+          args.push(file)
+        })
+
+      } else if (input.type === 'text') {
+        if (isOption) {
+          args.push(input.name)
+        }
+        args.push(body[input.name])
       }
     }
+    return {args: args, errors: errors};
   }
 
-  private static extractArgsFromProjectInfos(projectInfos: ProjectInfos): string[]  {
-    return projectInfos.inputs.map((input) => {return input.name})
-  }
+  private static async copyFilesToWorkspace(input: FileInputInfos, request: any, workspacePath: string) {
+    const filesName: string[] = []
+    if (input.multiple) {
+      const files = request.files(input.name)
+      for (const file of files) {
+        if (!file.isValid) {
+          throw new Error(`File ${file.clientName} is not valid.`);
+        }
+        await file.move(workspacePath)
+        filesName.push(file.clientName)
+      }
+    } else {
+      const file = request.file(input.name)
+      if (!file.isValid) {
+        throw new Error(`File ${input.name} is not valid.`);
+      }
+      await file.move(workspacePath);
+      filesName.push(file.clientName)
+    }
+    return filesName
+}
 
   private static async createANewExecution(projectInfos: ProjectInfos,) {
     // TODO: The path management suck
     const executionId = projectInfos.name.replaceAll(' ', '-') + '_' + Date.now()
     const workspacePath = app.tmpPath(`/workspace/${executionId}`)
-    const args = this.extractArgsFromProjectInfos(projectInfos)
+    // const args = this.extractArgsFromProjectInfos(projectInfos)
+    const args = [""]
 
     logger.debug(`projectInfos.path before resolve: ${projectInfos.path}`)
     const resolvedPath = path.resolve(projectInfos.path)
     logger.debug(`projectInfos.path after resolve: ${resolvedPath}`)
 
     // Script path manipulation
-    logger.debug(`Script name without resolve: ${projectInfos.scriptName}`)
-    const scriptPath = path.join(resolvedPath, projectInfos.scriptName)
-    logger.debug(`Script path: ${scriptPath}`)
+    // logger.debug(`Script name without resolve: ${projectInfos.scriptName}`)
+    // const scriptPath = path.join(resolvedPath, projectInfos.scriptName)
+    // logger.debug(`Script path: ${scriptPath}`)
 
     // Python path manipulation
     let pythonPath = path.join(resolvedPath, '.venv', 'Scripts', 'python')
@@ -256,7 +280,7 @@ export default class ExecuteScriptService {
     return await Execution.create({
       id: executionId,
       workspacePath,
-      scriptPath,
+      scriptPath: projectInfos.scriptName,
       pythonPath,
       args,
       status: 'pending',
