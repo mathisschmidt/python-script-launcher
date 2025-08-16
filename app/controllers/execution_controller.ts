@@ -6,6 +6,8 @@ import ProjectInfo from "#models/project";
 import ExecuteScriptService from "#services/execute_script_service";
 import Execution from "#models/execution";
 import logger from "@adonisjs/core/services/logger";
+import path from "node:path";
+import {existsSync} from "node:fs";
 
 // TODO: implement the stop execution
 
@@ -92,6 +94,26 @@ export default class ExecutionController {
       return response.json(data)
     } catch (error) {
       logger.error(`[execution_controller.getStatus] Execution not found or not valid. Error: ${error.message}`)
+      return response.status(400).json({ message: 'Execution not found or not valid', error: error })
+    }
+  }
+
+
+  async downloadOutputFile({params, response}: HttpContext) {
+    const {id, outputName} = params
+
+    try {
+      const execution = await Execution.findOrFail(id)
+      const filePath = path.join(execution.workspacePath, outputName)
+
+      if (!existsSync(filePath)) {
+        logger.error(`[execution_controller.downloadOutputFile] Output file ${filePath} not found`)
+        return response.status(400).json({ message: 'Output file ${filePath} not found'})
+      }
+
+      return response.download(filePath)
+    } catch (error) {
+      logger.error(`[execution_controller.downloadOutputFile] Execution not found or not valid. Error: ${error.message}`)
       return response.status(400).json({ message: 'Execution not found or not valid', error: error })
     }
   }

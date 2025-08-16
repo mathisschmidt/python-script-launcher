@@ -16,6 +16,7 @@ import ExecutionController from "#controllers/execution_controller";
 router.post('/execution', [ExecutionController, 'runExecution'])
 router.get('/execution/:id', [ExecutionController, 'show'])
 router.get('/execution/status/:id', [ExecutionController, 'getStatus'])
+router.get('/execution/:id/:outputName', [ExecutionController, 'downloadOutputFile'])
 
 import ExecutionMessageController from "#controllers/execution_message_controller"
 router.get('/execution_message/:id', [ExecutionMessageController, 'show'])

@@ -1,15 +1,23 @@
 import {useEffect, useRef, useState} from "react";
 import axios from "axios";
-import {ExecutionMessage, ExecutionMessageSchema, ExecutionStatus, ExecutionStatusSchema} from "~/types/schemas";
+import {
+  ExecutionMessage,
+  ExecutionMessageSchema,
+  ExecutionStatus,
+  ExecutionStatusSchema,
+  ProjectInfos
+} from "~/types/schemas";
 import {toast} from "react-toastify";
 import clsx from "clsx";
+import {Download, File} from "lucide-react";
 
 type PropsExecutionOutput = {
+  projectInfos: ProjectInfos
   executionId?: string | null
 }
 
 export default function ExecutionOutput(props: PropsExecutionOutput) {
-  const {executionId} = props
+  const {executionId, projectInfos} = props
   const [messages, setMessages] = useState<string[]>([]);
   const lastTimestamp = useRef<Date|null>(null)
   const statusRef = useRef<ExecutionStatus | null>(null)
@@ -108,6 +116,41 @@ export default function ExecutionOutput(props: PropsExecutionOutput) {
 
   const statusIsWarning = statusRef.current && statusRef.current.status === 'stopped'
 
+  const handleDownload = async (output: string) => {
+    if (!executionId) {
+      toast.error('executionId is not set.')
+      return
+    }
+
+    const response = await fetch(`/execution/${executionId}/${output}`, {
+      method: "GET",
+      credentials: "include"
+    });
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = output;
+    link.click();
+
+    // cleanup
+    window.URL.revokeObjectURL(url);
+    toast.success('Download successfully');
+  };
+
+  const getTotalTime = () => {
+    if (!statusRef.current) {
+      return -1
+    }
+    if (!statusRef.current.startedAt || !statusRef.current.completedAt) {
+      return -1
+    }
+    const diffMs = statusRef.current.completedAt.getTime() - statusRef.current.startedAt.getTime(); // difference in milliseconds
+
+    return Math.floor(diffMs / 1000)
+  }
 
   return (
     <div className="execution-output">
@@ -115,7 +158,7 @@ export default function ExecutionOutput(props: PropsExecutionOutput) {
         <div className="card__body">
           <div className="output-header">
             <h3>Output</h3>
-            <div className="status-indicator" id="execution-status">
+            <div className="status-indicator">
               <span className={clsx(
                 "status",
                 statusIsInfo && "status--info",
@@ -144,8 +187,38 @@ export default function ExecutionOutput(props: PropsExecutionOutput) {
             <div className="card">
               <div className="card__body">
                 <h3>Results</h3>
-                <div id="execution-summary">To implement</div>
-                <div id="output-files">{statusRef.current?.startedAt?.toISOString()}-{statusRef.current?.completedAt?.toISOString()} code:{statusRef.current?.exitCode}, status{statusRef.current?.status}</div>
+                <div>
+                  <div className={clsx(
+                    "execution-summary",
+                    statusIsError && "error",
+                  )}>
+                    <div className="summary-item">
+                      <span>Duration:</span>
+                      <span>{getTotalTime()}s</span>
+                    </div>
+                    <div className="summary-item">
+                      <span>Files Generated:</span>
+                      <span>Not implemented yet</span>
+                    </div>
+                  </div>
+                </div>
+                <div id="output-files">
+                  {projectInfos.outputs.map(output => (
+                    <div className="file-download">
+                      <div className="file-info">
+                        <File/>
+                        <div className="file-details">
+                          <span className="file-name">{output}</span>
+                        </div>
+                      </div>
+                      <button className="download-btn" onClick={() => handleDownload(output)}>
+                        <Download/>
+                        Download
+                      </button>
+                    </div>
+                  ))}
+
+                </div>
               </div>
             </div>
           </div>

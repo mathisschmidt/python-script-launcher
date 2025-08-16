@@ -41,7 +41,7 @@ export default function ExecutionPage(props: ProbsExecutionPage) {
           </div>
           <div className="execution-content">
             <ExecutionForm project_infos={projectInfos} onSucceed={handleOnSucceed}/>
-            <ExecutionOutput executionId={executionId} />
+            <ExecutionOutput projectInfos={projectInfos} executionId={executionId} />
           </div>
         </div>
 
