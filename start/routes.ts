@@ -20,3 +20,7 @@ router.get('/execution/:id/:outputName', [ExecutionController, 'downloadOutputFi
 
 import ExecutionMessageController from "#controllers/execution_message_controller"
 router.get('/execution_message/:id', [ExecutionMessageController, 'show'])
+
+import ConfigurationsController from "#controllers/configurations_controller";
+router.get('/configuration', [ConfigurationsController, 'index'])
+router.post('/configuration/loadConf', [ConfigurationsController, 'loadConf'])

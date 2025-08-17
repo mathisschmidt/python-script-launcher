@@ -5,17 +5,21 @@ export const InputInfosSchema = z.object({
   description: z.string(),
   required: z.boolean()
 })
-
+export type InputInfos = z.infer<typeof InputInfosSchema>
+//##########################################################################################
 export const FileInputInfosSchema = InputInfosSchema.extend({
   type: z.literal('file'),
   multiple: z.boolean()
 })
-
+export type FileInputInfos = z.infer<typeof FileInputInfosSchema>
+//##########################################################################################
 export const TextInputInfosSchema = InputInfosSchema.extend({
   type: z.literal('text'),
   defaultValue: z.string().optional()
 })
+export type TextInputInfos = z.infer<typeof TextInputInfosSchema>
 
+//##########################################################################################
 export const ProjectInfosSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -30,10 +34,13 @@ export const ProjectInfosSchema = z.object({
 })
 
 export type ProjectInfos = z.infer<typeof ProjectInfosSchema>
-export type InputInfos = z.infer<typeof InputInfosSchema>
-export type FileInputInfos = z.infer<typeof FileInputInfosSchema>
-export type TextInputInfos = z.infer<typeof TextInputInfosSchema>
+//##########################################################################################
+export const ProjectInfosSchemaWithoutId  = ProjectInfosSchema.omit({ id: true })
 
+export const ProjectInfosYamlSchema = z.object({
+  projects: z.array(ProjectInfosSchemaWithoutId),
+})
+export type ProjectInfosYaml = z.infer<typeof ProjectInfosYamlSchema>
 
 //##########################################################################################
 
