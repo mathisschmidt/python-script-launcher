@@ -186,17 +186,10 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 This project is licensed under the GPLv3 License - see the [LICENSE](readme_ressources/LICENSE.md) file for details.
 
-## 🙏 Acknowledgments
-
-- [AdonisJS](https://adonisjs.com/) for the robust backend framework
-- [Inertia.js](https://inertiajs.com/) for seamless React integration
-- [React](https://reactjs.org/) for the frontend experience
-
 ## 📧 Support
 
 If you have any questions or need help, please:
 - Open an issue on [GitHub Issues](https://github.com/mathisschmidt/python-script-launcher/issues)
-- 
 ---
 
 <div align="center">
