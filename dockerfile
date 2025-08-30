@@ -39,6 +39,9 @@ RUN node ace generate:key || echo "APP_KEY generation skipped"
 # Run database migrations
 RUN node ace migration:refresh
 
+# Create tmp folder
+RUN mkdir -p /app/build/tmp
+
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001 && \
