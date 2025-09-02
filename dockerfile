@@ -24,9 +24,6 @@ RUN cp /app/.env.example .env && \
     sed -i 's/HOST=localhost/HOST=0.0.0.0/' .env
 
 RUN node ace generate:key || echo "APP_KEY generation skipped"
-RUN node ace migration:refresh
-
-RUN mkdir -p /app/build/tmp
 
 # --- Final image ---
 FROM node:18-alpine
@@ -38,8 +35,12 @@ COPY --from=builder /app/build /app/build
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001 && \
+    adduser -S nextjs -u 1001
+
+# Create and set permissions for tmp directory
+RUN mkdir -p /app/build/tmp && \
     chown -R nextjs:nodejs /app
+
 USER nextjs
 
 EXPOSE 3333
@@ -47,4 +48,8 @@ EXPOSE 3333
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3333/health || exit 1
 
-CMD ["node", "bin/server.js"]
+# Create an entrypoint script to run migrations before starting the server
+COPY --chown=nextjs:nodejs docker-entrypoint.sh /app/build/
+RUN chmod +x /app/build/docker-entrypoint.sh
+
+ENTRYPOINT ["/app/build/docker-entrypoint.sh"]
