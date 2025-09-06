@@ -14,16 +14,17 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
-
-WORKDIR /app/build
-RUN npm ci --omit=dev
-
 RUN cp /app/.env.example .env && \
     sed -i 's/NODE_ENV=development/NODE_ENV=production/' .env && \
     sed -i 's/HOST=localhost/HOST=0.0.0.0/' .env
-
 RUN node ace generate:key || echo "APP_KEY generation skipped"
+
+RUN npm run build
+
+RUN cp ./.env ./build/.env
+
+WORKDIR /app/build
+RUN npm ci --omit=dev
 
 # --- Final image ---
 FROM node:18-alpine
@@ -50,6 +51,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Create an entrypoint script to run migrations before starting the server
 COPY --chown=nextjs:nodejs docker-entrypoint.sh /app/build/
-RUN chmod +x /app/build/docker-entrypoint.sh
 
 ENTRYPOINT ["/app/build/docker-entrypoint.sh"]
