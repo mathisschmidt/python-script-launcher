@@ -13,15 +13,17 @@ RUN apk add --no-cache \
 COPY package*.json ./
 RUN npm ci
 
+# Copy full source (including your real .env from host)
 COPY . .
-RUN cp /app/.env.example .env && \
-    sed -i 's/NODE_ENV=development/NODE_ENV=production/' .env && \
-    sed -i 's/HOST=localhost/HOST=0.0.0.0/' .env
-RUN node ace generate:key || echo "APP_KEY generation skipped"
+
+# ✅ Do NOT overwrite .env or regenerate APP_KEY
+# Just ensure production settings are correct.
+# Instead of sed, rely on .env or env vars at runtime.
 
 RUN npm run build
 
-RUN cp ./.env ./build/.env
+# Copy .env into build (keeps your host-provided APP_KEY)
+RUN cp .env ./build/.env
 
 WORKDIR /app/build
 RUN npm ci --omit=dev
