@@ -40,7 +40,7 @@ RUN addgroup -g 1001 -S nodejs && \
 
 # Create and set permissions for tmp directory
 RUN mkdir -p /app/build/tmp && \
-    chown -R nextjs:nodejs /app
+    chown -R nextjs:nodejs /app/build/tmp
 
 USER nextjs
 
