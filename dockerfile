@@ -51,5 +51,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Create an entrypoint script to run migrations before starting the server
 COPY --chown=nextjs:nodejs docker-entrypoint.sh /app/build/
+RUN chmod +x /app/build/docker-entrypoint.sh
 
 ENTRYPOINT ["/app/build/docker-entrypoint.sh"]
